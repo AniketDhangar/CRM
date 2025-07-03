@@ -1,14 +1,17 @@
 import express from "express";
-import bodyParser from "body-parser";
 import dotenv from "dotenv";
-import cors from "cors";
-import sequelize from "./src/config/db.js";
-import userRouter from "./src/routes/userRoutes.js";
-
 dotenv.config();
+import bodyParser from "body-parser";
+
+import cors from "cors";
+// import sequelize from "./src/config/db.js";
+import userRouter from "./src/routes/userRoutes.js";
+import connectDB from "./src/config/Database.js";
+
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
+connectDB()
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -21,20 +24,20 @@ app.use('/api/user',userRouter)
 
 
 
-sequelize
-  .authenticate()
-  .then(() => {
-    console.log("✅ Database connected...");
+// sequelize
+//   .authenticate()
+//   .then(() => {
+//     console.log("✅ Database connected...");
 
    
-    return sequelize.sync({ alter: true });
-  })
-  .then(() => {
-    console.log("✅ Models synced.");
-  })
-  .catch((err) => {
-    console.error("❌ Error connecting to DB:", err);
-  });
+//     return sequelize.sync({ alter: true });
+//   })
+//   .then(() => {
+//     console.log("✅ Models synced.");
+//   })
+//   .catch((err) => {
+//     console.error("❌ Error connecting to DB:", err);
+//   });
 
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port: ${PORT}`);
