@@ -1,7 +1,8 @@
-// middleware/verifyToken.js
 import jwt from "jsonwebtoken";
+import User from "../models/UserSchema.js";
 
-const verifyToken = (req, res, next) => {
+
+const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -12,9 +13,18 @@ const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // attaches { id, email, isAdmin }
+
+   
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found or removed." });
+    }
+
+    req.user = user; // includes _id, role, email, etc.
     next();
   } catch (error) {
+    console.log("❌ JWT Verification Error:", error.message);
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };

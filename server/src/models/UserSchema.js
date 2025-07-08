@@ -27,9 +27,18 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    studioName: {
+      type: String,
+      required: true,
+    },
+    studioLocation: {
+      type: String,
+      required: true,
+    },
   },
+
   {
-    timestamps: true, // adds createdAt & updatedAt
+    timestamps: true,
   }
 );
 
