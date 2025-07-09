@@ -7,7 +7,6 @@ import {
   getOrderById,
   updateOrder,
 } from "../controllers/orderController.js";
-import { getInvoicePDF } from "../controllers/invoiceController.js";
 
 const orderRouter = express.Router();
 orderRouter.post("/addorder", verifyToken, addOrder);
@@ -17,5 +16,5 @@ orderRouter.patch("/updateorder", verifyToken, updateOrder);
 orderRouter.delete("/deleteorder", verifyToken, deleteOrder);
 
 
-orderRouter.get('/:id/invoice', verifyToken, getInvoicePDF);
+
 export default orderRouter;

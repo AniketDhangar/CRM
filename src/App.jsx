@@ -1,17 +1,8 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import ApiTester from './components/ApiTester'
+import React from 'react';
+import AdminLayout from './components/AdminLayout';
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  return <AdminLayout />;
+};
 
-  return (
-    <>
-     <ApiTester />
-    </>
-  )
-}
-
-export default App
+export default App;

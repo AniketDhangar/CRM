@@ -11,6 +11,7 @@ import customerRouter from "./src/routes/customerRoutes.js";
 import serviceRouter from "./src/routes/serviceRoutes.js";
 import orderRouter from "./src/routes/orderRoutes.js";
 import router from "./src/routes/revenueRoutes.js";
+import pdfRouter from "./src/routes/pdfRoutes.js";
 
 
 const app = express();
@@ -30,6 +31,7 @@ app.use('/api/customer', customerRouter)
 app.use('/api/service', serviceRouter)
 app.use('/api/order',orderRouter)
 app.use('/api/revenue',router)
+app.use('/api/pdf',pdfRouter)
 
 
 
