@@ -140,6 +140,31 @@ export const getRevenueReports = async (req, res) => {
       .select("invoiceNumber finalTotal discount tax advanceAmount dueAmount createdAt")
       .sort({ createdAt: -1 });
 
+    // 7. New Customers per Month
+    const newCustomersPerMonth = await Customer.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.year": -1, "_id.month": -1 } }
+    ]);
+
+    // 8. Total Orders
+    const totalOrders = await Order.countDocuments({ userId });
+    // 9. Total Revenue
+    const totalRevenue = await Order.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      { $group: { _id: null, total: { $sum: "$finalTotal" } } }
+    ]);
+    // 10. Total Services
+    const totalServices = await Service.countDocuments({ userId });
+
     // 📦 Return all results
     res.json({
       revenuePerCustomer,
@@ -147,7 +172,11 @@ export const getRevenueReports = async (req, res) => {
       revenuePerYear,
       profitMargins,
       serviceBreakdown,
-      perOrderRevenue
+      perOrderRevenue,
+      newCustomersPerMonth,
+      totalOrders,
+      totalRevenue: totalRevenue[0]?.total || 0,
+      totalServices
     });
 
   } catch (error) {

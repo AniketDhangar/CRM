@@ -9,74 +9,6 @@ const generateInvoiceNumber = () => {
   return `INV-${random}-${timestamp}`;
 };
 
-// const addOrder = async (req, res) => {
-//   try {
-//     const {
-//       customerId,
-//       eventDate,
-//       venue,
-//       services,
-//       tax = 0,
-//       discount = 0,
-//       finalTotal,
-//       advanceAmount = 0,
-//       dueAmount,
-//     } = req.body;
-
-//     const userId = req.user._id;
-
-//     if (!mongoose.Types.ObjectId.isValid(customerId)) {
-//       return res.status(400).json({ message: "Invalid customer ID" });
-//     }
-
-//     const customer = await Customer.findOne({ _id: customerId, userId });
-
-//     if (!customer) {
-//       return res
-//         .status(404)
-//         .json({ message: "Customer not found or unauthorized" });
-//     }
-
-//     const customerSnapshot = {
-//       name: customer.name,
-//       email: customer.email,
-//       mobile: customer.mobile,
-//       address: customer.address,
-//       city: customer.city,
-//     };
-
-//     const invoiceNumber = generateInvoiceNumber();
-
-//     const newOrder = await Order.create({
-//       customer: customer._id,
-//       customerSnapshot,
-//       userId,
-//       invoiceNumber,
-//       eventDate,
-//       venue,
-//       services,
-//       tax,
-//       discount,
-//       finalTotal,
-//       advanceAmount,
-//       dueAmount,
-//     });
-
-//     res.status(201).json({
-//       success: true,
-//       message: "Order created successfully",
-//       order: newOrder,
-//     });
-//   } catch (error) {
-//     console.log("❌ Error adding order:", error.message);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Server error",
-//       error: error.message,
-//     });
-//   }
-// };
-
 const addOrder = async (req, res) => {
   try {
     const {
@@ -100,9 +32,7 @@ const addOrder = async (req, res) => {
     const customer = await Customer.findOne({ _id: customerId, userId });
 
     if (!customer) {
-      return res
-        .status(404)
-        .json({ message: "Customer not found or unauthorized" });
+      return res.status(404).json({ message: "Customer not found or unauthorized" });
     }
 
     // Prepare snapshot
@@ -118,11 +48,9 @@ const addOrder = async (req, res) => {
     const subtotal = Array.isArray(services)
       ? services.reduce((sum, item) => sum + item.total, 0)
       : 0;
-
     const taxAmount = subtotal * (tax / 100);
     const finalTotal = subtotal + taxAmount - discount;
     const dueAmount = finalTotal - advanceAmount;
-
     const invoiceNumber = generateInvoiceNumber();
 
     // Create the order
