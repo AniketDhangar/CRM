@@ -3,10 +3,12 @@ import Customer from "../models/customerSchema.js"
 import sendEmail from "../utils/emailSender.js";
 import mongoose from "mongoose";
 import orderSchema from "../models/orderSchema.js";
+import auditLogger from '../utils/auditLogger.js';
 
 const addCustomer = async (req, res) => {
   try {
-    const { userId, name, city, email, mobile, address } = req.body;
+    const { name, city, email, mobile, address } = req.body;
+    const userId = req.user._id;
 
     if (!userId || !name || !mobile) {
       return res
@@ -34,6 +36,14 @@ const addCustomer = async (req, res) => {
     });
 
     await newCustomer.save();
+
+    await auditLogger({
+      userId,
+      action: 'Customer Created',
+      entityType: 'Customer',
+      entityId: newCustomer._id,
+      details: `Customer created: ${name} (${mobile})`,
+    });
 
     try {
       await sendEmail(
@@ -171,6 +181,14 @@ const deleteCustomer = async (req, res) => {
       return res.status(404).json({ message: "Customer not found" });
     }
 
+    await auditLogger({
+      userId,
+      action: 'Customer Deleted',
+      entityType: 'Customer',
+      entityId: customer._id,
+      details: `Customer deleted: ${customer.name} (${customer.mobile})`,
+    });
+
     res.status(200).json({ message: "Customer deleted successfully" });
   } catch (error) {
     console.log("❌ Error deleting customer:", error);
@@ -196,6 +214,14 @@ const updateCustomer = async (req, res) => {
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
     }
+
+    await auditLogger({
+      userId,
+      action: 'Customer Updated',
+      entityType: 'Customer',
+      entityId: customer._id,
+      details: `Customer updated: ${name} (${mobile})`,
+    });
 
     res
       .status(200)

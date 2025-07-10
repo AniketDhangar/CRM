@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import sendEmail from "../utils/emailSender.js";
+import auditLogger from '../utils/auditLogger.js';
 
 dotenv.config();
 
@@ -47,6 +48,14 @@ const registerUser = async (req, res) => {
     });
 
     await newUser.save();
+
+    await auditLogger({
+      userId: newUser._id,
+      action: 'User Registered',
+      entityType: 'User',
+      entityId: newUser._id,
+      details: `User registered: ${name} (${email})`,
+    });
 
     // ✅ Send Welcome Email (fail-safe)
     try {
@@ -105,6 +114,13 @@ const login = async (req, res) => {
       expiresIn: "8h",
     });
 
+    await auditLogger({
+      userId: user._id,
+      action: 'User Login',
+      entityType: 'User',
+      entityId: user._id,
+      details: `User logged in: ${user.email}`,
+    });
     
     try {
       await sendEmail(
@@ -182,6 +198,13 @@ const deleteUser = async (req, res) => {
 
     const deletedUser = await UserSchema.findByIdAndDelete(findUser._id);
 
+    await auditLogger({
+      userId: findUser._id,
+      action: 'User Deleted',
+      entityType: 'User',
+      entityId: findUser._id,
+      details: `User deleted: ${findUser.email}`,
+    });
     
     try {
       await sendEmail(

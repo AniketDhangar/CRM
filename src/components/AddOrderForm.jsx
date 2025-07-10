@@ -12,7 +12,7 @@ const defaultService = { service: '', date: '', qty: 1, days: 1, salePrice: 0, t
 const AddOrderForm = ({ open, onClose, onOrderAdded }) => {
   const [servicesList, setServicesList] = useState([]);
   const [form, setForm] = useState({
-    customerSnapshot: { name: '', mobile: '', email: '', address: '', city: '' },
+    customer: { name: '', mobile: '', email: '', address: '', city: '' },
     eventDate: '',
     venue: '',
     services: [ { ...defaultService } ],
@@ -24,19 +24,22 @@ const AddOrderForm = ({ open, onClose, onOrderAdded }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Fetch services only
+  // Fetch services
   useEffect(() => {
     const fetchServices = async () => {
+      if (!open) return;
       try {
         const token = localStorage.getItem('token');
-        const servRes = await axios.get('http://localhost:3000/api/service/allservices', { headers: { Authorization: `Bearer ${token}` } });
+        const servRes = await axios.get('http://localhost:3000/api/service/allservices', { 
+          headers: { Authorization: `Bearer ${token}` } 
+        });
         setServicesList(servRes.data.data || []);
       } catch (err) {
         setError(err.response?.data?.message || err.message || 'Failed to load services');
         console.error('Service fetch error:', err);
       }
     };
-    if (open) fetchServices();
+    fetchServices();
   }, [open]);
 
   // Calculate totals
@@ -50,31 +53,51 @@ const AddOrderForm = ({ open, onClose, onOrderAdded }) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
   const handleCustomerField = (e) => {
-    setForm({ ...form, customerSnapshot: { ...form.customerSnapshot, [e.target.name]: e.target.value } });
+    setForm({ ...form, customer: { ...form.customer, [e.target.name]: e.target.value } });
   };
   const handleServiceChange = (idx, field, value) => {
-    const updated = form.services.map((s, i) =>
-      i === idx ? { ...s, [field]: value, total: field === 'qty' || field === 'salePrice' ? (Number(field === 'qty' ? value : s.qty) * Number(field === 'salePrice' ? value : s.salePrice)) : s.total } : s
-    );
+    const updated = form.services.map((s, i) => {
+      if (i === idx) {
+        const newService = { ...s, [field]: value };
+        if (field === 'qty' || field === 'salePrice') {
+          newService.total = Number(newService.qty) * Number(newService.salePrice);
+        }
+        return newService;
+      }
+      return s;
+    });
     setForm({ ...form, services: updated });
   };
   const addService = () => {
     setForm({ ...form, services: [ ...form.services, { ...defaultService } ] });
   };
   const removeService = (idx) => {
-    setForm({ ...form, services: form.services.filter((_, i) => i !== idx) });
+    if (form.services.length > 1) {
+      setForm({ ...form, services: form.services.filter((_, i) => i !== idx) });
+    }
   };
 
+  // On submit: create customer, then order
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const payload = {
-        ...form,
+      // 1. Create customer
+      const customerPayload = { ...form.customer };
+      const customerRes = await axios.post('http://localhost:3000/api/customer/addcustomer', customerPayload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const customerId = customerRes.data.customer._id;
+      // 2. Create order with new customerId
+      const orderPayload = {
+        customerId,
+        eventDate: form.eventDate,
+        venue: form.venue,
         services: form.services.map(s => ({
-          ...s,
+          service: s.service,
+          date: s.date,
           qty: Number(s.qty),
           days: Number(s.days),
           salePrice: Number(s.salePrice),
@@ -83,8 +106,9 @@ const AddOrderForm = ({ open, onClose, onOrderAdded }) => {
         tax: Number(form.tax),
         discount: Number(form.discount),
         advanceAmount: Number(form.advanceAmount),
+        status: form.status,
       };
-      await axios.post('http://localhost:3000/api/order/addorder', payload, {
+      await axios.post('http://localhost:3000/api/order/addorder', orderPayload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (onOrderAdded) onOrderAdded();
@@ -105,19 +129,19 @@ const AddOrderForm = ({ open, onClose, onOrderAdded }) => {
           <Grid container spacing={2}>
             {/* Customer fields */}
             <Grid item xs={12} sm={4}>
-              <TextField name="name" label="Customer Name" value={form.customerSnapshot.name} onChange={handleCustomerField} fullWidth required />
+              <TextField name="name" label="Customer Name" value={form.customer.name} onChange={handleCustomerField} fullWidth required />
             </Grid>
             <Grid item xs={12} sm={4}>
-              <TextField name="mobile" label="Mobile" value={form.customerSnapshot.mobile} onChange={handleCustomerField} fullWidth required />
+              <TextField name="mobile" label="Mobile" value={form.customer.mobile} onChange={handleCustomerField} fullWidth required />
             </Grid>
             <Grid item xs={12} sm={4}>
-              <TextField name="email" label="Email" value={form.customerSnapshot.email} onChange={handleCustomerField} fullWidth />
+              <TextField name="email" label="Email" value={form.customer.email} onChange={handleCustomerField} fullWidth />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField name="city" label="City" value={form.customerSnapshot.city} onChange={handleCustomerField} fullWidth />
+              <TextField name="city" label="City" value={form.customer.city} onChange={handleCustomerField} fullWidth />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField name="address" label="Address" value={form.customerSnapshot.address} onChange={handleCustomerField} fullWidth />
+              <TextField name="address" label="Address" value={form.customer.address} onChange={handleCustomerField} fullWidth />
             </Grid>
             {/* Order fields */}
             <Grid item xs={12} sm={6}>

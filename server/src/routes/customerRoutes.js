@@ -4,7 +4,7 @@ import verifyToken from "../middleware/verifyToken.js";
 
 const customerRouter = express.Router();
 
-customerRouter.post('/addcustomer', addCustomer);
+customerRouter.post('/addcustomer', verifyToken, addCustomer);
 customerRouter.get('/getcustomers',verifyToken,getCustomers);
 customerRouter.post('/getbyid',verifyToken,getCustomerById);
 customerRouter.patch('/updatecustomer',verifyToken,updateCustomer);

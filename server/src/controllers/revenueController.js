@@ -184,3 +184,31 @@ export const getRevenueReports = async (req, res) => {
     res.status(500).json({ message: "Failed to generate reports", error: error.message });
   }
 };
+
+// Dashboard analytics endpoint
+const getDashboardStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    // Total revenue (sum of finalTotal for all orders)
+    const orders = await Order.find({ userId });
+    const totalRevenue = orders.reduce((sum, o) => sum + (o.finalTotal || 0), 0);
+    const orderCount = orders.length;
+    const customerCount = await Customer.countDocuments({ userId });
+    // Order status breakdown
+    const statusCounts = orders.reduce((acc, o) => {
+      acc[o.status] = (acc[o.status] || 0) + 1;
+      return acc;
+    }, {});
+    res.status(200).json({
+      totalRevenue,
+      orderCount,
+      customerCount,
+      statusCounts
+    });
+  } catch (error) {
+    console.log('❌ Dashboard stats error:', error.message);
+    res.status(500).json({ message: 'Dashboard stats error', error: error.message });
+  }
+};
+
+export { getDashboardStats };
